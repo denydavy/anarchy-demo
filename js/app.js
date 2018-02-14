@@ -7,6 +7,8 @@
     var date_start = floor_date(new Date()).getTime();
     var buffer = [];
     var cam_list = [];
+    var FRAME_WIDTH = 194;
+    var MOUSE_WHEEL_STEP = 20;
 
     api.get_video_origins().then(
         function (data) {
@@ -27,7 +29,7 @@
         },
         function (err) {
             console.log(err);
-            mount_point.classList.add("no-connection");
+            mount_point.parentElement.classList.add("no-connection");
         }
     );
 
@@ -114,10 +116,10 @@
                 arch_end_stripe.style.opacity = 0;
                 mount_point.style.transform = "translateX("+(track_translation + distance)+"px)";
 
-                if(distance / 194 > slides_moved){
+                if(distance / FRAME_WIDTH > slides_moved){
                     load_frame();
                     slides_moved++;
-                    mount_point.style.width = (parseInt(getComputedStyle(mount_point).width) + 194) + "px";
+                    mount_point.style.width = (parseInt(getComputedStyle(mount_point).width) + FRAME_WIDTH) + "px";
                 }
             }
         }
@@ -141,15 +143,15 @@
         console.log(e);
         if(e.deltaY > 0) {
             arch_end_stripe.style.opacity = 0;
-            mount_point.style.transform = "translatex("+(get_translation() + 20) + "px)";
-            mount_point.style.width = (parseInt(getComputedStyle(mount_point).width) + 194) + "px";
+            mount_point.style.transform = "translatex("+(get_translation() + MOUSE_WHEEL_STEP) + "px)";
+            mount_point.style.width = (parseInt(getComputedStyle(mount_point).width) + FRAME_WIDTH) + "px";
             load_frame();
         } else {
-            if(get_translation() - 20 < 0) {
+            if(get_translation() - MOUSE_WHEEL_STEP < 0) {
                 arch_end_stripe.style.opacity = 1;
                 return;
             }
-            mount_point.style.transform = "translatex("+(get_translation() - 20) + "px";
+            mount_point.style.transform = "translatex("+(get_translation() - MOUSE_WHEEL_STEP) + "px";
         }
 
     });
@@ -164,7 +166,7 @@
         var header = document.createTextNode(make_frame_date(date));
 
         div.classList.add("archive-pane__ruler__track__frame-container");
-        loading_dummy.classList.add("archive-pane__ruler_track__frame-container__loader");
+        loading_dummy.classList.add("archive-pane__ruler__track__frame-container__loader");
 
         div.appendChild(header);
         div.appendChild(loading_dummy);
