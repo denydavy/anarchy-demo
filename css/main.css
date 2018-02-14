@@ -53,16 +53,10 @@ body {
 }
 
 .archive-pane__ruler {
-    width: 100%;
-    min-height: 100px;
-    margin: 0 20px;
+    width: 970px;
+    min-height: 200px;
     overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    transition: all .5s ease;
     position: relative;
-    left:0;
     cursor: initial;
 }
 
@@ -87,7 +81,14 @@ body {
     animation: 1s spin ease infinite;
 }
 
-.archive-pane__frame-container {
+.archive-pane__ruler__track {
+    position: absolute;
+    top:0;
+    right:0;
+    transform: translateX(0);
+}
+
+.archive-pane__ruler__track__frame-container {
     display: flex;
     flex-flow: column;
     justify-content: center;
@@ -96,25 +97,25 @@ body {
     border: .5px solid #e2e2e2;
     border-bottom: 10px solid #e2e2e2;
     line-height: 1.5;
-    margin: 0 2px;
+    float:left;
 }
 
-.archive-pane__frame-container img {
+.archive-pane__ruler__track__frame-container img {
     margin-top: 2px;
     visibility: hidden;
     width: 193px;
     height: 144px;
 }
 
-.archive-pane__frame-container img.loaded {
+.archive-pane__ruler__track__frame-container img.loaded {
     visibility: visible;
 }
 
-.archive-pane__frame-container.no-frame  {
+.archive-pane__ruler__track__frame-container.no-frame  {
     border-bottom: 10px solid lightpink;
 }
 
-.archive-pane__frame-container.no-frame:after {
+.archive-pane__ruler__track__frame-container.no-frame:after {
     content: "Нет кадра";
     font-size: 16px;
     color: #333;
@@ -125,7 +126,7 @@ body {
     transform: translateX(-50%) translateY(-50%);
 }
 
-.archive-pane__frame-container__loader {
+.archive-pane__ruler__track__frame-container__loader {
     width: 193px;
     height: 144px;
     margin-top: 2px;
@@ -134,7 +135,7 @@ body {
     left:0;
 }
 
-.archive-pane__frame-container__loader:after {
+.archive-pane__ruler__track__frame-container__loader:after {
     content:"";
     position: absolute;
     top: 47%;

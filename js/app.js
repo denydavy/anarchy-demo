@@ -1,7 +1,7 @@
 (function () {
 
     var source;
-    var mount_point = document.querySelector(".archive-pane__ruler");
+    var mount_point = document.querySelector(".archive-pane__ruler__track");
     var arch_end_stripe = document.querySelector(".archive-pane__after");
     var cam_select_list = document.querySelector(".archive-pane__select-cam");
     var date_start = floor_date(new Date()).getTime();
@@ -12,7 +12,7 @@
         function (data) {
             arch_end_stripe.classList.remove("hide");
             cam_select_list.classList.remove("hide");
-            mount_point.classList.add("connected");
+            mount_point.parentElement.classList.add("connected");
             data = JSON.parse(data);
             for(var i in data){
                 cam_list.push(data[i]);
@@ -41,6 +41,9 @@
         nodeList_to_Array(mount_point.children).map(function (t) {
            mount_point.removeChild(t);
         });
+        mount_point.style.width = "970px";
+        mount_point.style.transform = "translateX(0px)";
+        arch_end_stripe.style.opacity = 1;
         build_visible_timeline();
     });
 
@@ -57,7 +60,6 @@
     function get_arch_frame(offset_minutes){
         var image = new Image();
         var image_time = new Date(date_start - offset_minutes * 60 * 1000);
-        console.log(image_time, make_ts(image_time));
         image.src = api.get_arch_url(source, make_ts(image_time));
 
         var wrapped = make_frame_container(image, image_time);
@@ -82,58 +84,40 @@
         this.parentElement.classList.add('no-frame');
     }
 
-    function load_prev_frame() {
-        if(buffer[buffer.length - 1].offset === 0) {
-            return;
-        }
-        var el = get_arch_frame(buffer[buffer.length - 1].offset - 1);
-        buffer.shift();
-        buffer.push(el);
-        update_ruler_view(false,el.el);
-        if(buffer[buffer.length - 1].offset === 0) {
-            arch_end_stripe.style.opacity = 1;
-        }
-    }
-
-    function load_next_frame() {
-        arch_end_stripe.style.opacity = 0;
+    function load_frame() {
         var el = get_arch_frame(buffer[0].offset + 1);
-        buffer.pop();
         buffer.unshift(el);
-        update_ruler_view(true, el.el);
+        mount_point.insertBefore(el.el, mount_point.children[0]);
     }
-
-    mount_point.addEventListener("wheel", function (e) {
-        if(e.deltaY > 0) {
-            load_prev_frame();
-        } else {
-            load_next_frame();
-        }
-    });
 
     mount_point.addEventListener("mousedown", function (e) {
         var initial_x = e.pageX;
         var current_x = e.pageX;
         var slides_moved = 0;
+        var track_translation = get_translation();
 
         mount_point.classList.add('dragging');
 
         function handleDrag(e) {
             current_x = e.pageX;
-            if (initial_x > current_x && Math.abs(initial_x - current_x) > 150) {
-                if (Math.abs(slides_moved) < 4) {
-                    slides_moved++;
-                    setTimeout(function () {
-                        load_prev_frame();
-                    }, 200);
+            var distance = Math.abs(initial_x - current_x);
+
+            if (initial_x > current_x) {
+                if(track_translation - distance < 0) {
+                    mount_point.style.transform = "translateX(0px)";
+                    arch_end_stripe.style.opacity = 1;
+                    return;
                 }
+                mount_point.style.transform = "translateX("+(track_translation - distance)+"px)";
             }
-            else if( initial_x < current_x && Math.abs(initial_x - current_x) > 150){
-                if(Math.abs(slides_moved) < 4) {
-                    slides_moved--;
-                    setTimeout(function () {
-                        load_next_frame();
-                    }, 200);
+            else if(initial_x < current_x){
+                arch_end_stripe.style.opacity = 0;
+                mount_point.style.transform = "translateX("+(track_translation + distance)+"px)";
+
+                if(distance / 194 > slides_moved){
+                    load_frame();
+                    slides_moved++;
+                    mount_point.style.width = (parseInt(getComputedStyle(mount_point).width) + 194) + "px";
                 }
             }
         }
@@ -142,42 +126,51 @@
 
         mount_point.addEventListener("mouseup", function () {
             mount_point.removeEventListener("mousemove", handleDrag);
-            lock = false;
             mount_point.classList.remove('dragging');
-
+            slides_moved = 0;
         });
 
         mount_point.addEventListener("mouseleave", function () {
             mount_point.removeEventListener("mousemove", handleDrag);
-            lock = false;
             mount_point.classList.remove('dragging');
-
+            slides_moved = 0;
         });
     });
+
+    mount_point.addEventListener("mousewheel", function (e) {
+        console.log(e);
+        if(e.deltaY > 0) {
+            arch_end_stripe.style.opacity = 0;
+            mount_point.style.transform = "translatex("+(get_translation() + 20) + "px)";
+            mount_point.style.width = (parseInt(getComputedStyle(mount_point).width) + 194) + "px";
+            load_frame();
+        } else {
+            if(get_translation() - 20 < 0) {
+                arch_end_stripe.style.opacity = 1;
+                return;
+            }
+            mount_point.style.transform = "translatex("+(get_translation() - 20) + "px";
+        }
+
+    });
+
+    function get_translation() {
+        return parseInt(getComputedStyle(mount_point).transform.split(",")[4]);
+    }
 
     function make_frame_container(img, date){
         var div = document.createElement("div");
         var loading_dummy = document.createElement("div");
         var header = document.createTextNode(make_frame_date(date));
 
-        div.classList.add("archive-pane__frame-container");
-        loading_dummy.classList.add("archive-pane__frame-container__loader");
+        div.classList.add("archive-pane__ruler__track__frame-container");
+        loading_dummy.classList.add("archive-pane__ruler_track__frame-container__loader");
 
         div.appendChild(header);
         div.appendChild(loading_dummy);
         div.appendChild(img);
 
         return div;
-    }
-
-    function update_ruler_view(shouldPrepend, el){
-        if(!shouldPrepend){
-            mount_point.removeChild(mount_point.children[0]);
-            mount_point.appendChild(el);
-        } else {
-            mount_point.removeChild(mount_point.children[mount_point.children.length - 1]);
-            mount_point.insertBefore(el, mount_point.children[0]);
-        }
     }
 
     function make_frame_date(date){
